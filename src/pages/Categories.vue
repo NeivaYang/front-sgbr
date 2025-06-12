@@ -1,0 +1,18 @@
+<template>
+  <q-page>
+    <ContentPages :title="'Catergorias'"></ContentPages>
+  </q-page>
+</template>
+
+<script lang="ts">
+import { defineComponent } from 'vue';
+import ContentPages from 'components/organisms/ContentPages.vue';
+
+export default defineComponent({
+  name: 'CategoriesPage',
+
+  components: {
+    ContentPages,
+  },
+});
+</script>
