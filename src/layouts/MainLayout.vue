@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <AppToolbar :toggleLeftDrawer="toggleLeftDrawer" />
-    <AppDrawer v-model="leftDrawerOpen" />
+    <AppToolbar />
+    <AppDrawer />
 
     <q-page-container>
       <router-view />
@@ -10,9 +10,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import AppDrawer from '../components/organisms/Drawer.vue';
 import AppToolbar from '../components/organisms/Toollbar.vue';
+import { useUserStore } from '../stores/userStore';
 
 export default defineComponent({
   name: 'MainLayout',
@@ -23,15 +24,17 @@ export default defineComponent({
   },
 
   setup() {
-    const leftDrawerOpen = ref(true);
+    const userStore = useUserStore();
 
-    function toggleLeftDrawer() {
-      leftDrawerOpen.value = !leftDrawerOpen.value;
-    }
+    // Exemplo de uso:
+    userStore.setUser({
+      name: 'Yang Araújo Neiva',
+      about:
+        'Meu nome é Yang Araújo Neiva, tenho 29 anos e sou desenvolvedor de software Full Stack',
+    });
 
     return {
-      leftDrawerOpen,
-      toggleLeftDrawer,
+      userStore,
     };
   },
 });
