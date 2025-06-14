@@ -1,6 +1,6 @@
 # front-test-sgbr (front-end-test-sgbr)
 
-A Quasar 2 project for a front-end test
+This is a Quasar Framework project for a front-end test
 
 ## Install the dependencies
 
@@ -10,34 +10,22 @@ yarn
 npm install
 ```
 
+## Create a .env file
+
+```bash
+cp .env.example .env
+
+# And then edit the .env file to set your environment variables
+```
+
 ### Start the app in development mode (hot-code reloading, error reporting, etc.)
 
 ```bash
 quasar dev
 ```
 
-### Lint the files
-
-```bash
-yarn lint
-# or
-npm run lint
-```
-
-### Format the files
-
-```bash
-yarn format
-# or
-npm run format
-```
-
-### Build the app for production
+### To Set the Build of the app for production
 
 ```bash
 quasar build
 ```
-
-### Customize the configuration
-
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
