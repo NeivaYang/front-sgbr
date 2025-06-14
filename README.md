@@ -24,8 +24,6 @@ cp .env.example .env
 quasar dev
 ```
 
-### To Set the Build of the app for production
+---
 
-```bash
-quasar build
-```
+Seguindo os passos acima e configurando corretamente as variáveis `VITE_GIPHY_API_KEY` e `VITE_GIPHY_API_URL` no arquivo `.env`, já é possível rodar o app em modo de desenvolvimento.
