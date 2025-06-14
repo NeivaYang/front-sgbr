@@ -1,7 +1,6 @@
 <template>
   <q-header elevated>
     <q-toolbar>
-      <q-btn flat dense round icon="menu" aria-label="Menu" />
       <q-toolbar-title class="">
         <q-img src="../../assets/logo.svg" alt="Logo" style="height: 36px; width: 36px" />
       </q-toolbar-title>

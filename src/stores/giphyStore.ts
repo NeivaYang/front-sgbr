@@ -1,12 +1,8 @@
+import { AxiosError } from 'axios';
 import { defineStore } from 'pinia';
 import { LocalStorage } from 'quasar';
 import api from 'src/services/api';
 
-// interface Giphy {
-//   id: string;
-//   url: string;
-//   favorites: Array<Giphy>;
-// }
 export interface GiphyImageFormat {
   url: string;
   width: string;
@@ -36,66 +32,132 @@ export interface GiphyGif {
   images: GiphyImages;
 }
 
+interface Category {
+  name: string;
+  name_encoded: string;
+  subcategories: Subcategory[];
+  gif: GiphyGif;
+}
+
+interface Subcategory {
+  name: string;
+  name_encoded: string;
+}
+
+const mapGiphyGif = (item: GiphyGif) => ({
+  id: item.id,
+  title: item.title,
+  slug: item.slug,
+  url: item.url,
+  username: item.username,
+  source: item.source,
+  rating: item.rating,
+  import_datetime: item.import_datetime,
+  trending_datetime: item.trending_datetime,
+  images: {
+    fixed_height: item.images?.fixed_height ?? { url: '', width: '', height: '' },
+    original: item.images?.original ?? { url: '', width: '', height: '' },
+    downsized: item.images?.downsized ?? { url: '', width: '', height: '' },
+    preview: item.images?.preview ?? { url: '', width: '', height: '' },
+  },
+});
+
 export const useGiphyStore = defineStore('giphy', {
   state: () => ({
     giphies: (LocalStorage.getItem('giphies') as GiphyGif[]) || [],
     loading: false,
+    loadingInfiniteScroll: false,
     error: null as string | null,
+    errorMessage: '',
     searchQuery: 'funny',
     searchResults: [] as GiphyGif[],
     favorites: (() => {
       const stored = LocalStorage.getItem('favorites');
       return Array.isArray(stored) ? (stored as GiphyGif[]) : [];
     })(),
+    categories: (LocalStorage.getItem('categories') as Category[]) || [],
+    selectedCategory: null as string | null,
   }),
 
   actions: {
-    async fetchGiphies({ query = 'funny', offset = 0 }: { query?: string; offset?: number }) {
+    async fetchGiphies({
+      query = '',
+      offset = 0,
+      limit = 30,
+    }: {
+      query?: string;
+      offset?: number;
+      limit?: number;
+    }) {
+      this.error = null;
+      if (offset != 0) {
+        // Se o offset não for zero, significa que é uma busca por scroll infinito
+        // Nesse caso. loadingInfiniteScroll = true
+        this.loadingInfiniteScroll = true;
+      } else {
+        // Se o offset for zero, significa que é uma busca inicial
+        // Nesse caso, loading = true
+        this.loading = true;
+      }
+      try {
+        const response = await api.get('search', {
+          params: { q: query, limit, offset },
+        });
+        const giphies = response.data.data.map((item: GiphyGif) => mapGiphyGif(item));
+        if (offset === 0) {
+          this.setGiphies(giphies);
+        } else {
+          this.setGiphies([...this.giphies, ...giphies]);
+        }
+        LocalStorage.set('giphies', giphies);
+        return giphies.length;
+      } catch (err: unknown) {
+        this.error = err instanceof AxiosError ? err.message : 'Erro ao buscar Giphies';
+        this.errorMessage =
+          err instanceof AxiosError ? err.response?.data?.meta?.msg : 'Erro ao buscar Giphies';
+      } finally {
+        this.loading = false;
+        this.loadingInfiniteScroll = false;
+      }
+    },
+
+    async fetchCategoryGiphies() {
       this.loading = true;
       this.error = null;
       try {
-        const response = await api.get('search', {
-          params: { q: query, limit: 15, offset },
+        const response = await api.get('categories');
+        const c = response.data.data.map((item: Category) => {
+          return {
+            name: item.name,
+            name_encoded: item.name_encoded,
+            subcategories: item.subcategories.map((sub: Subcategory) => ({
+              name: sub.name,
+              name_encoded: sub.name_encoded,
+            })),
+            gif: mapGiphyGif(item.gif),
+          };
         });
-        const giphies = response.data.data.map((item: GiphyGif) => ({
-          id: item.id,
-          title: item.title,
-          slug: item.slug,
-          url: item.url,
-          username: item.username,
-          source: item.source,
-          rating: item.rating,
-          import_datetime: item.import_datetime,
-          trending_datetime: item.trending_datetime,
-          images: {
-            fixed_height: item.images?.fixed_height ?? { url: '', width: '', height: '' },
-            original: item.images?.original ?? { url: '', width: '', height: '' },
-            downsized: item.images?.downsized ?? { url: '', width: '', height: '' },
-            preview: item.images?.preview ?? { url: '', width: '', height: '' },
-          },
-        }));
-        this.giphies = giphies;
-        LocalStorage.set('giphies', giphies);
+        this.setCategories(c);
       } catch (err: unknown) {
-        this.error = err instanceof Error ? err.message : 'Erro ao buscar Giphies';
+        this.error =
+          err instanceof AxiosError ? err.message : 'Erro ao buscar Giphies por categoria';
+        this.errorMessage =
+          err instanceof AxiosError
+            ? err.response?.data?.meta?.msg
+            : 'Erro ao buscar Giphies por categoria';
       } finally {
         this.loading = false;
       }
     },
 
+    setCategories(categories: Category[]) {
+      this.categories = categories;
+      LocalStorage.set('categories', categories);
+    },
+
     setGiphies(data: GiphyGif[]) {
       this.giphies = data;
       LocalStorage.set('giphies', data);
-    },
-
-    addGiphy(giphy: GiphyGif) {
-      this.giphies.push(giphy);
-      LocalStorage.set('giphies', this.giphies);
-    },
-
-    removeGiphy(id: string) {
-      this.giphies = this.giphies.filter((g: GiphyGif) => g.id !== id);
-      LocalStorage.set('giphies', this.giphies);
     },
 
     clearGiphies() {
@@ -109,7 +171,6 @@ export const useGiphyStore = defineStore('giphy', {
     },
 
     addFavorite(giphy: GiphyGif) {
-      console.log('Favorites before adding:', this.favorites);
       // Assegura que "favorites" está inicializado como array
       if (!this.favorites || !Array.isArray(this.favorites)) {
         this.favorites = [];

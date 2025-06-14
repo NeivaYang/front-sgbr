@@ -4,7 +4,7 @@
       <div v-if="giphyStore.loading" class="flex items-center justify-center">
         <q-spinner-grid color="primary" size="5.5em" />
       </div>
-      <div v-else-if="giphyStore.favorites" class="flex items-center justify-end">
+      <div v-else-if="giphyStore.favorites" class="flex items-center justify-center">
         <div class="q-pa-md row justify-between">
           <div class="row justify-between q-gutter-sm">
             <q-intersection
@@ -28,7 +28,7 @@
                     icon="close"
                     @click="
                       giphyStore.removeFavorite(gif.id);
-                      showNotification('Gif removido doss favoritos!', 'negative');
+                      showNotification('Gif removido dos favoritos!', 'negative');
                     "
                   />
                 </q-card-actions>
@@ -36,6 +36,15 @@
             </q-intersection>
           </div>
         </div>
+      </div>
+      <div
+        v-if="giphyStore.favorites.length === 0 && !giphyStore.loading"
+        class="flex items-center justify-center"
+      >
+        <q-banner class="bg-info text-dark flex items-center justify-center">
+          <q-icon name="error" size="xl" />
+          Você ainda não tem nenhum gif favorito.
+        </q-banner>
       </div>
     </ContentPages>
   </q-page>
